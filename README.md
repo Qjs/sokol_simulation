@@ -12,6 +12,7 @@ From the repo:
 git pull
 git submodule update --init --recursive
 mkdir ./build/
+cd ./build/
 emcmake cmake -DCMAKE_BUILD_TYPE=M
 inSizeRel -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..
 cmake --build .
