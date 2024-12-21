@@ -57,9 +57,10 @@ static void frame(void) {
         .delta_time = dt,
         .dpi_scale = sapp_dpi_scale()
     });
+    ImGuiWindowFlags flags = ImGuiWindowFlags_AlwaysAutoResize;
 
     // UI: Simulation Selector
-    igBegin("Simulation Selector", NULL, 0);
+    igBegin("Simulation Selector", NULL, flags);
 
     const char* current_name = simulations_get(current_sim)->name;
     if (igBeginCombo("Simulation", current_name, 0)) {
@@ -85,12 +86,12 @@ static void frame(void) {
 
     igEnd(); // End "Simulation Selector" window
 
-    igBegin("Simulation Plot", NULL, 0);
+    igBegin("Simulation Plot", NULL,flags);
     if (state.sim && state.sim->plot_ui) state.sim->plot_ui();
     igEnd();
     
     // Render current simulation
-    igBegin("Simulation Render", NULL, 0);
+    igBegin("Simulation Render", NULL, flags);
     if (state.sim && state.sim->render) state.sim->render();
     igEnd();
 

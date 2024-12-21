@@ -88,6 +88,7 @@ void sim_pendulum_init(void) {
 
     pendulum_pass_action = (sg_pass_action){
         .colors[0] = {
+            .store_action = SG_STOREACTION_STORE,
             .load_action = SG_LOADACTION_CLEAR,
             .clear_value = {0.0f,0.0f,0.0f,1.0f}
         }
@@ -103,12 +104,12 @@ void sim_pendulum_init(void) {
     });
 
     // Minimal vertex and fragment shaders:
-    // We'll do a 2D rotation and scaling in the vertex shader:
+        // We'll do a 2D rotation and scaling in the vertex shader:
     const char* vs_src =
         "#version 300 es\n"
         "precision mediump float;\n"
         "layout(location=0) in vec2 pos;\n"
-        "uniform vec2 u_params;\n" // u_params.x = angle, u_params.y = length
+        "uniform vec2 u_params;\n"
         "void main() {\n"
         "  float angle = u_params.x;\n"
         "  float length = u_params.y;\n"
@@ -117,8 +118,6 @@ void sim_pendulum_init(void) {
         "  mat2 rot = mat2(c, -s, s, c);\n"
         "  vec2 p = pos;\n"
         "  p.y *= length;\n"
-        "  // Simple orthographic projection to [-1,1]\n"
-        "  // rotate the line about the pivot\n"
         "  p = rot * p;\n"
         "  gl_Position = vec4(p, 0.0, 0.9);\n"
         "}\n";
@@ -127,30 +126,51 @@ void sim_pendulum_init(void) {
         "#version 300 es\n"
         "precision mediump float;\n"
         "out vec4 frag_color;\n"
-        "void main(){\n"
-        "  frag_color=vec4(1.0,1.0,1.0,1.0);\n"
+        "void main() {\n"
+        "  frag_color = vec4(1.0, 1.0, 1.0, 1.0);\n"
         "}\n";
-
     // Create shader
-    pendulum_shader = sg_make_shader(&(sg_shader_desc){
-        .vertex_func.source = vs_src,
-        .fragment_func.source = fs_src,
-        .uniform_blocks[0].size = sizeof(pendulum_uniforms_t),
-        .uniform_blocks[0].glsl_uniforms[0] = {.type = SG_UNIFORMTYPE_FLOAT2, .glsl_name = "u_params"}
-    });
+
+    sg_shader_desc shader_desc = {
+        .vertex_func = {
+            .source = vs_src,
+            .entry = "main"
+        },
+        .fragment_func = {
+            .source = fs_src,
+            .entry = "main"
+        },
+        .uniform_blocks[0] = {
+            .stage = SG_SHADERSTAGE_VERTEX,
+            .size = sizeof(pendulum_uniforms_t),
+            .glsl_uniforms = {
+                [0] = { .type = SG_UNIFORMTYPE_FLOAT2, .glsl_name = "u_params" }
+            }
+        },
+        .attrs[0] = {
+            .glsl_name = "pos"
+        },
+        .label = "Pendulum Shader"
+    };
+
+    pendulum_shader = sg_make_shader(&shader_desc);
 
     // Create pipeline
-    pendulum_pip = sg_make_pipeline(&(sg_pipeline_desc){
-        .shader = pendulum_shader,
+    sg_pipeline_desc pipeline_desc = {
+        .shader = sg_make_shader(&shader_desc),
+        .layout = {
+            .attrs[0] = { .format = SG_VERTEXFORMAT_FLOAT2 }
+        },
         .primitive_type = SG_PRIMITIVETYPE_LINES,
-        .layout.attrs[0].format = SG_VERTEXFORMAT_FLOAT2,
         .depth = {
             .compare = SG_COMPAREFUNC_LESS_EQUAL,
             .write_enabled = true
         },
         .colors[0].pixel_format = PENDULUM_COLOR_FORMAT,
         .depth.pixel_format = PENDULUM_DEPTH_FORMAT
-    });
+    };
+
+    pendulum_pip = sg_make_pipeline(&pipeline_desc);
 
     // Setup bindings
     pendulum_bind.vertex_buffers[0] = pendulum_vbuf;
@@ -188,21 +208,31 @@ void sim_pendulum_destroy(void) {
 
 /* Update logic */
 void sim_pendulum_update(float dt) {
-    float angle_acc = -(pendulum_gravity/pendulum_length)*sinf(pendulum_angle);
-    pendulum_angular_vel += angle_acc*dt;
-    pendulum_angle += pendulum_angular_vel*dt;
+    float angle_acc = -(pendulum_gravity / pendulum_length) * sinf(pendulum_angle);
+    pendulum_angular_vel += angle_acc * dt;
+    pendulum_angle += pendulum_angular_vel * dt;
 
-    if (pendulum_data_count<200) {
-        pendulum_time_data[pendulum_data_count] = pendulum_data_count*dt;
+    const float max_time = 10.0f; // Fixed time period in seconds
+    const int max_points = 200;  // Maximum data points to display
+
+    if (pendulum_data_count < max_points) {
+        pendulum_time_data[pendulum_data_count] = pendulum_data_count * dt;
         pendulum_angle_data[pendulum_data_count] = pendulum_angle;
         pendulum_data_count++;
     } else {
-        for (int i=1; i<200; i++){
-            pendulum_time_data[i-1]=pendulum_time_data[i];
-            pendulum_angle_data[i-1]=pendulum_angle_data[i];
+        for (int i = 1; i < max_points; i++) {
+            pendulum_time_data[i - 1] = pendulum_time_data[i];
+            pendulum_angle_data[i - 1] = pendulum_angle_data[i];
         }
-        pendulum_time_data[199] = pendulum_time_data[198]+dt;
-        pendulum_angle_data[199]= pendulum_angle;
+        pendulum_time_data[max_points - 1] = pendulum_time_data[max_points - 2] + dt;
+        pendulum_angle_data[max_points - 1] = pendulum_angle;
+    }
+
+    // Ensure time data doesn't exceed the max_time
+    if (pendulum_time_data[0] >= max_time) {
+        for (int i = 0; i < max_points; i++) {
+            pendulum_time_data[i] -= max_time;
+        }
     }
 
     // Prepare uniforms
@@ -239,9 +269,12 @@ void sim_pendulum_params_ui(void) {
 
 /* Plot UI */
 void sim_pendulum_plot_ui(void) {
-    if (ImPlot_BeginPlot("Pendulum Angle",(ImVec2){0,0},ImPlotFlags_None)) {
-        ImPlot_SetNextMarkerStyle(ImPlotMarker_Circle,1.0f,(ImVec4){1.0f,1.0f,1.0f,1.0f},1.0f,(ImVec4){1.0f,1.0f,1.0f,1.0f});
-        ImPlot_PlotLine_FloatPtrFloatPtr("Angle",pendulum_time_data,pendulum_angle_data,pendulum_data_count,ImPlotLineFlags_None,0,sizeof(float));
+    float max_time = pendulum_time_data[pendulum_data_count - 1];
+    float min_time = (max_time > 10.0f) ? max_time - 10.0f : 0.0f;
+    ImPlot_SetNextAxesLimits(min_time,max_time,-1.0f, 1.0f,ImGuiCond_Always);
+
+    if (ImPlot_BeginPlot("Pendulum Angle", (ImVec2){0, 0}, ImPlotFlags_None)) {     
+        ImPlot_PlotLine_FloatPtrFloatPtr("Angle", pendulum_time_data, pendulum_angle_data, pendulum_data_count, ImPlotLineFlags_None, 0, sizeof(float));
         ImPlot_EndPlot();
     }
 }
