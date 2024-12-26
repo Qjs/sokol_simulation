@@ -13,6 +13,7 @@
 
 #include "none.h"
 #include "pendulum.h"
+#include "mcpi.h"
 
 #include <math.h>
 #include <stdlib.h>
