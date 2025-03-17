@@ -18,7 +18,7 @@ X(ID, DisplayName, Init, Destroy, Update, ParamUI, PlotUI, Render)
 #define X_SIMULATIONS \
     X(SIM_NONE,      "None",      sim_none_init,      sim_none_destroy,      sim_none_update,      sim_none_params_ui,      sim_none_plot_ui,      sim_none_render) \
     X(SIM_PENDULUM,  "Pendulum",  sim_pendulum_init,  sim_pendulum_destroy,  sim_pendulum_update,  sim_pendulum_params_ui,  sim_pendulum_plot_ui,  sim_pendulum_render) \
-    X(SIM_MCPI,  "Pendulum",  sim_mcpi_init,  sim_mcpi_destroy,  sim_mcpi_update,  sim_mcpi_params_ui,  sim_mcpi_plot_ui,  sim_mcpi_render) 
+    X(SIM_MCPI,  "Monte Carlo Pi",  sim_mcpi_init,  sim_mcpi_destroy,  sim_mcpi_update,  sim_mcpi_params_ui,  sim_mcpi_plot_ui,  sim_mcpi_render) 
 
 /* Generate enum */
 typedef enum {

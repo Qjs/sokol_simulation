@@ -5,6 +5,7 @@ add_executable(${EXEC_NAME}
     main.c
     simulations/none.c
     simulations/pendulum.c
+    simulations/mcpi.c
     simulations/simulations.c
 )
 
