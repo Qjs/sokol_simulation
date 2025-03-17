@@ -33,8 +33,8 @@ Each Simulation will have:
  - Renders of the concepts
 
 ### List of Visualizations to implement:
- - Pendulum
- - Monte Carlo Pi Estimation
+ [x] Pendulum
+ [x] Monte Carlo Pi Estimation
  - Mass Spring Simulator
  - 2D Ising Model
  - Game of Life
