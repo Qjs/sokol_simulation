@@ -14,6 +14,11 @@
 #include <stdlib.h>
 #include <stdint.h>
 
+#define BUFFER_LEN 600
+#ifndef M_PI
+#define M_PI 3.14159265358979323846264338327
+#endif
+
 /* Pendulum Parameters */
 static float pendulum_gravity = 9.81f;
 static float pendulum_length = 1.0f;
@@ -21,8 +26,8 @@ static float pendulum_angle = 0.5f;
 static float pendulum_angular_vel = 0.0f;
 
 /* Plot Data */
-static float pendulum_time_data[200];
-static float pendulum_angle_data[200];
+static float pendulum_time_data[BUFFER_LEN];
+static float pendulum_angle_data[BUFFER_LEN];
 static int   pendulum_data_count = 0;
 
 #define PENDULUM_OFFSCREEN_WIDTH (256)
@@ -205,35 +210,21 @@ void sim_pendulum_destroy(void) {
     pendulum_sampler = (sg_sampler){0};
 }
 
-
 /* Update logic */
 void sim_pendulum_update(float dt) {
     float angle_acc = -(pendulum_gravity / pendulum_length) * sinf(pendulum_angle);
     pendulum_angular_vel += angle_acc * dt;
     pendulum_angle += pendulum_angular_vel * dt;
 
-    const float max_time = 10.0f; // Fixed time period in seconds
-    const int max_points = 200;  // Maximum data points to display
+    // Wrap pendulum_angle within [-π, π]
+    pendulum_angle = fmodf(pendulum_angle + M_PI, 2.0f * M_PI);
+    if (pendulum_angle < 0)
+        pendulum_angle += 2.0f * M_PI;
+    pendulum_angle -= M_PI;
 
-    if (pendulum_data_count < max_points) {
-        pendulum_time_data[pendulum_data_count] = pendulum_data_count * dt;
-        pendulum_angle_data[pendulum_data_count] = pendulum_angle;
-        pendulum_data_count++;
-    } else {
-        for (int i = 1; i < max_points; i++) {
-            pendulum_time_data[i - 1] = pendulum_time_data[i];
-            pendulum_angle_data[i - 1] = pendulum_angle_data[i];
-        }
-        pendulum_time_data[max_points - 1] = pendulum_time_data[max_points - 2] + dt;
-        pendulum_angle_data[max_points - 1] = pendulum_angle;
-    }
-
-    // Ensure time data doesn't exceed the max_time
-    if (pendulum_time_data[0] >= max_time) {
-        for (int i = 0; i < max_points; i++) {
-            pendulum_time_data[i] -= max_time;
-        }
-    }
+    pendulum_time_data[pendulum_data_count] = pendulum_data_count * dt;
+    pendulum_angle_data[pendulum_data_count] = pendulum_angle;
+    pendulum_data_count = (pendulum_data_count +1) % BUFFER_LEN;
 
     // Prepare uniforms
     uniforms.angle = pendulum_angle;
@@ -258,7 +249,7 @@ void sim_pendulum_params_ui(void) {
         pendulum_angle=0.5f;
         pendulum_angular_vel=0.0f;
         pendulum_data_count=0;
-        for (int i=0; i<200; i++){
+        for (int i=0; i<BUFFER_LEN; i++){
             pendulum_time_data[i]=0.0f;
             pendulum_angle_data[i]=0.0f;
         }
@@ -269,12 +260,18 @@ void sim_pendulum_params_ui(void) {
 
 /* Plot UI */
 void sim_pendulum_plot_ui(void) {
-    float max_time = pendulum_time_data[pendulum_data_count - 1];
-    float min_time = (max_time > 10.0f) ? max_time - 10.0f : 0.0f;
-    ImPlot_SetNextAxesLimits(min_time,max_time,-1.0f, 1.0f,ImGuiCond_Always);
 
-    if (ImPlot_BeginPlot("Pendulum Angle", (ImVec2){0, 0}, ImPlotFlags_None)) {     
-        ImPlot_PlotLine_FloatPtrFloatPtr("Angle", pendulum_time_data, pendulum_angle_data, pendulum_data_count, ImPlotLineFlags_None, 0, sizeof(float));
+    if (pendulum_data_count < 2) {
+        return; // Not enough data to plot
+    }
+
+    float max_time = 10.0f;
+    float min_time = 0.0f;
+
+    ImPlot_SetNextAxesLimits(min_time, max_time, -pendulum_length, pendulum_length, ImPlotCond_Always);
+    // Plot setup with fixed time axis range
+    if (ImPlot_BeginPlot("Pendulum Angle", (ImVec2){0, 0}, ImPlotFlags_None)) {
+        ImPlot_PlotLine_FloatPtrFloatPtr("Angle", pendulum_time_data, pendulum_angle_data, BUFFER_LEN, 0, 0, sizeof(float));
         ImPlot_EndPlot();
     }
 }
