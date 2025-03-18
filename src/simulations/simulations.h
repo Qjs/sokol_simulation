@@ -19,7 +19,8 @@ X(ID, DisplayName, Init, Destroy, Update, ParamUI, PlotUI, Render)
     X(SIM_NONE,      "None",      sim_none_init,      sim_none_destroy,      sim_none_update,      sim_none_params_ui,      sim_none_plot_ui,      sim_none_render) \
     X(SIM_PENDULUM,  "Pendulum",  sim_pendulum_init,  sim_pendulum_destroy,  sim_pendulum_update,  sim_pendulum_params_ui,  sim_pendulum_plot_ui,  sim_pendulum_render) \
     X(SIM_MCPI,  "Monte Carlo Pi",  sim_mcpi_init,  sim_mcpi_destroy,  sim_mcpi_update,  sim_mcpi_params_ui,  sim_mcpi_plot_ui,  sim_mcpi_render) \
-    X(SIM_GOL,  "Game of Life",  sim_gol_init,  sim_gol_destroy,  sim_gol_update,  sim_gol_params_ui,  sim_gol_plot_ui,  sim_gol_render) 
+    X(SIM_GOL,  "Game of Life",  sim_gol_init,  sim_gol_destroy,  sim_gol_update,  sim_gol_params_ui,  sim_gol_plot_ui,  sim_gol_render) \
+    X(SIM_ISING,  "Ising Model",  sim_ising_init,  sim_ising_destroy,  sim_ising_update,  sim_ising_params_ui,  sim_ising_plot_ui,  sim_ising_render) 
 
 
 /* Generate enum */
