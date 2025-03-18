@@ -7,6 +7,7 @@ add_executable(${EXEC_NAME}
     simulations/pendulum.c
     simulations/mcpi.c
     simulations/gol.c
+    simulations/ising.c
     simulations/simulations.c
 )
 

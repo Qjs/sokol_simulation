@@ -15,6 +15,7 @@
 #include "pendulum.h"
 #include "mcpi.h"
 #include "gol.h"
+#include "ising.h"
 
 #include <math.h>
 #include <stdlib.h>
