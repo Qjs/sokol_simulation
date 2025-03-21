@@ -33,11 +33,11 @@ Each Simulation will have:
  - Renders of the concepts
 
 ### List of Visualizations to implement:
- [x] Pendulum
- [x] Monte Carlo Pi Estimation
+ - [x] Pendulum
+ - [x] Monte Carlo Pi Estimation
  - Mass Spring Simulator
- - 2D Ising Model
- - Game of Life
+ - [x] 2D Ising Model
+ - [x] Game of Life
  - Traveling Salesman
  - Mandlebrot set
  - Fluid Flow interaction
@@ -46,3 +46,4 @@ Each Simulation will have:
  - Psychrometric Chart
  - Schrodinger's Equation
  - Diffusion 2D random walks
+ 
